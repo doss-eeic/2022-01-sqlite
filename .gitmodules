@@ -1,0 +1,3 @@
+[submodule "rust-searchable-pke"]
+	path = rust-searchable-pke
+	url = https://github.com/SoraSuegami/rust-searchable-pke.git
