@@ -20,6 +20,7 @@
 #include <math.h>
 #endif
 #include "vdbeInt.h"
+#include "rust_apis.h"
 
 /*
 ** Return the collating function associated with a function.
@@ -2197,6 +2198,32 @@ static void signFunc(
 }
 
 /*
+** Implementation of PEKS_TEST(cipher, trapdoor) function.
+*/
+static void peks_testFunc(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  int len, len2;
+  int result;
+  CPeksCiphertext cipher;
+  CPeksTrapdoor trapdoor;
+
+  assert( argc==2 );
+  UNUSED_PARAMETER(argc);
+
+  len = sqlite3_value_bytes(argv[0]);
+  len2 = sqlite3_value_bytes(argv[1]);
+  if( len == 0 || len2 == 0) return;
+  cipher.ptr = (char*)sqlite3_value_text(argv[0]);
+  trapdoor.ptr = (char*)sqlite3_value_text(argv[1]);
+  result = peks_test(cipher, trapdoor);
+  sqlite3_result_int(context, result);
+}
+
+
+/*
 ** All of the FuncDef structures in the aBuiltinFunc[] array above
 ** to the global function hash table.  This occurs at start-time (as
 ** a consequence of calling sqlite3_initialize()).
@@ -2290,6 +2317,7 @@ void sqlite3RegisterBuiltinFunctions(void){
     FUNCTION(substr,             3, 0, 0, substrFunc       ),
     FUNCTION(substring,          2, 0, 0, substrFunc       ),
     FUNCTION(substring,          3, 0, 0, substrFunc       ),
+    FUNCTION(peks_test,          2, 0, 0, peks_testFunc    ),
     WAGGREGATE(sum,   1,0,0, sumStep, sumFinalize, sumFinalize, sumInverse, 0),
     WAGGREGATE(total, 1,0,0, sumStep,totalFinalize,totalFinalize,sumInverse, 0),
     WAGGREGATE(avg,   1,0,0, sumStep, avgFinalize, avgFinalize, sumInverse, 0),
