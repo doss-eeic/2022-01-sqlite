@@ -11501,6 +11501,7 @@ fi
 
 fi
 
+#-----------------------------------------------------------------------
 #   --enable-cipher
 #
 # Check whether --enable-cipher was given.
@@ -11544,6 +11545,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_CARGO" && ac_cv_path_CARGO="notfound"
   ;;
 esac
 fi
@@ -11556,6 +11558,11 @@ else
 printf "%s\n" "no" >&6; }
 fi
 
+
+  if test "$CARGO" = "notfound"
+then :
+  as_fn_error $? "cargo is required" "$LINENO" 5
+fi
   LIBPEKS="peks/release/librust_searchable_pke.so"
   LIBS="$LIBS -Lpeks/release -lrust_searchable_pke"
   OPT_FEATURE_FLAGS="${OPT_FEATURE_FLAGS} -DSQLITE_ENABLE_CIPHER"

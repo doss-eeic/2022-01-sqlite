@@ -132,10 +132,13 @@ fi
 #
 AC_ARG_ENABLE(cipher, [AS_HELP_STRING(
   [--enable-cipher], [SQL cipher functions [default=no]])],
-  [], [enable_cipher=no])
+  [], [])
 AC_MSG_CHECKING([SQL cipher functions])
 if test x"$enable_cipher" = "xyes"; then
-  AC_PATH_PROG(CARGO, cargo)
+  AC_PATH_PROG([CARGO], [cargo], [notfound])
+  AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
+  LIBPEKS="peks/release/librust_searchable_pke.so"
+  LIBS="$LIBS -Lpeks/release -lrust_searchable_pke"
   BUILD_CFLAGS="$BUILD_CFLAGS -DSQLITE_ENABLE_CIPHER"
   AC_MSG_RESULT([enabled])
 else
