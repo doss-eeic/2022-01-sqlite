@@ -28,6 +28,7 @@ BCC = @BUILD_CC@ @BUILD_CFLAGS@
 # are provide so that these aspects of the build process can be changed
 # on the "make" command-line.  Ex:  "make CC=clang CFLAGS=-fsanitize=undefined"
 #
+CARGO = @CARGO@
 CC = @CC@
 CFLAGS = @CPPFLAGS@ @CFLAGS@
 TCC = ${CC} ${CFLAGS} -I. -I${TOP}/src -I${TOP}/ext/rtree -I${TOP}/ext/icu
@@ -203,9 +204,12 @@ LIBOBJS1 = sqlite3.lo
 #
 LIBOBJ = $(LIBOBJS$(USE_AMALGAMATION))
 
+LIBPEKS = @LIBPEKS@
 
 # All of the source code files.
 #
+PEKSDIR = $(TOP)/rust-searchable-pke
+
 SRC = \
   $(TOP)/src/alter.c \
   $(TOP)/src/analyze.c \
@@ -433,7 +437,7 @@ TESTSRC = \
   $(TOP)/ext/fts3/fts3_term.c \
   $(TOP)/ext/fts3/fts3_test.c  \
   $(TOP)/ext/session/test_session.c \
-  $(TOP)/ext/rbu/test_rbu.c 
+  $(TOP)/ext/rbu/test_rbu.c \
 
 # Statically linked extensions
 #
@@ -555,7 +559,8 @@ HDR = \
    $(TOP)/src/vdbeInt.h \
    $(TOP)/src/vxworks.h \
    $(TOP)/src/whereInt.h \
-   sqlite_cfg.h
+   sqlite_cfg.h \
+   $(PEKSDIR)/rust_apis.h
 
 # Header files used by extensions
 #
@@ -645,7 +650,7 @@ Makefile: $(TOP)/Makefile.in
 sqlite3.pc: $(TOP)/sqlite3.pc.in
 	./config.status
 
-libsqlite3.la:	$(LIBOBJ)
+libsqlite3.la:	$(LIBOBJ) $(LIBPEKS)
 	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(TLIBS) \
 		${ALLOWRELEASE} -rpath "$(libdir)" -version-info "8:6:8"
 
@@ -656,7 +661,12 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		-version-info "8:6:8" \
 		-avoid-version
 
-sqlite3$(TEXE):	shell.c sqlite3.c
+$(LIBPEKS):
+	rm -fr peks
+	mkdir peks
+	$(CARGO) build --manifest-path $(PEKSDIR)/Cargo.toml --target-dir peks --release
+
+sqlite3$(TEXE):	shell.c sqlite3.c $(LIBPEKS)
 	$(LTLINK) $(READLINE_FLAGS) $(SHELL_OPT) -o $@ \
 		shell.c sqlite3.c \
 		$(LIBREADLINE) $(TLIBS) -rpath "$(libdir)"
@@ -1449,9 +1459,10 @@ releasetest:
 
 # Standard install and cleanup targets
 #
-lib_install:	libsqlite3.la
+lib_install:	libsqlite3.la $(LIBPEKS)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(LTINSTALL) libsqlite3.la $(DESTDIR)$(libdir)
+	$(LTINSTALL) $(LIBPEKS) $(DESTDIR)$(libdir)
 
 install:	sqlite3$(TEXE) lib_install sqlite3.h sqlite3.pc ${HAVE_TCL:1=tcl_install}
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -1499,6 +1510,7 @@ clean:
 	rm -f dbhash dbhash.exe
 	rm -f fts5.* fts5parse.*
 	rm -f threadtest5
+	rm -rf peks
 
 distclean:	clean
 	rm -f sqlite_cfg.h config.log config.status libtool Makefile sqlite3.pc \

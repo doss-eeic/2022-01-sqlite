@@ -128,6 +128,22 @@ fi
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
+#   --enable-cipher
+#
+AC_ARG_ENABLE(cipher, [AS_HELP_STRING(
+  [--enable-cipher], [SQL cipher functions [default=no]])],
+  [], [enable_cipher=no])
+AC_MSG_CHECKING([SQL cipher functions])
+if test x"$enable_cipher" = "xyes"; then
+  AC_PATH_PROG(CARGO, cargo)
+  BUILD_CFLAGS="$BUILD_CFLAGS -DSQLITE_ENABLE_CIPHER"
+  AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
 #   --enable-fts4
 #
 AC_ARG_ENABLE(fts4, [AS_HELP_STRING(

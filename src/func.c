@@ -20,7 +20,9 @@
 #include <math.h>
 #endif
 #include "vdbeInt.h"
+#ifdef SQLITE_ENABLE_CIPHER
 #include "rust_apis.h"
+#endif
 
 /*
 ** Return the collating function associated with a function.
@@ -2197,6 +2199,8 @@ static void signFunc(
   sqlite3_result_int(context, x<0.0 ? -1 : x>0.0 ? +1 : 0);
 }
 
+
+#ifdef SQLITE_ENABLE_CIPHER
 /*
 ** Implementation of PEKS_TEST(cipher, trapdoor) function.
 */
@@ -2219,8 +2223,13 @@ static void peks_testFunc(
   cipher.ptr = (char*)sqlite3_value_text(argv[0]);
   trapdoor.ptr = (char*)sqlite3_value_text(argv[1]);
   result = peks_test(cipher, trapdoor);
-  sqlite3_result_int(context, result);
+  if(result == 1){
+    sqlite3_result_int(context, 1);
+  }else{
+    sqlite3_result_int(context, 0);
+  }
 }
+#endif  /* SQLITE_ENABLE_CIPHER */
 
 
 /*
@@ -2317,7 +2326,9 @@ void sqlite3RegisterBuiltinFunctions(void){
     FUNCTION(substr,             3, 0, 0, substrFunc       ),
     FUNCTION(substring,          2, 0, 0, substrFunc       ),
     FUNCTION(substring,          3, 0, 0, substrFunc       ),
+  #ifdef SQLITE_ENABLE_CIPHER
     FUNCTION(peks_test,          2, 0, 0, peks_testFunc    ),
+  #endif
     WAGGREGATE(sum,   1,0,0, sumStep, sumFinalize, sumFinalize, sumInverse, 0),
     WAGGREGATE(total, 1,0,0, sumStep,totalFinalize,totalFinalize,sumInverse, 0),
     WAGGREGATE(avg,   1,0,0, sumStep, avgFinalize, avgFinalize, sumInverse, 0),
