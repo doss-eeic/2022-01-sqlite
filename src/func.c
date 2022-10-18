@@ -2204,15 +2204,15 @@ static void signFunc(
 /*
 ** Implementation of PEKS_TEST(cipher, trapdoor) function.
 */
-static void peks_testFunc(
+static void test_cipherFunc(
   sqlite3_context *context,
   int argc,
   sqlite3_value **argv
 ){
   int len, len2;
   int result;
-  CPeksCiphertext cipher;
-  CPeksTrapdoor trapdoor;
+  CPecdkCiphertext cipher;
+  CPecdkTrapdoor trapdoor;
 
   assert( argc==2 );
   UNUSED_PARAMETER(argc);
@@ -2222,7 +2222,7 @@ static void peks_testFunc(
   if( len == 0 || len2 == 0) return;
   cipher.ptr = (char*)sqlite3_value_text(argv[0]);
   trapdoor.ptr = (char*)sqlite3_value_text(argv[1]);
-  result = peks_test(cipher, trapdoor);
+  result = pecdk_test(cipher, trapdoor);
   if(result == 1){
     sqlite3_result_int(context, 1);
   }else{
@@ -2327,7 +2327,7 @@ void sqlite3RegisterBuiltinFunctions(void){
     FUNCTION(substring,          2, 0, 0, substrFunc       ),
     FUNCTION(substring,          3, 0, 0, substrFunc       ),
   #ifdef SQLITE_ENABLE_CIPHER
-    FUNCTION(peks_test,          2, 0, 0, peks_testFunc    ),
+    FUNCTION(test_cipher,          2, 0, 0, test_cipherFunc    ),
   #endif
     WAGGREGATE(sum,   1,0,0, sumStep, sumFinalize, sumFinalize, sumInverse, 0),
     WAGGREGATE(total, 1,0,0, sumStep,totalFinalize,totalFinalize,sumInverse, 0),

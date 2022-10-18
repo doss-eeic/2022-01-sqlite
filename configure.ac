@@ -606,6 +606,24 @@ else
 fi
 
 ##########
+# Do we want to support cipher functions
+#
+AC_ARG_ENABLE(cipher,
+AS_HELP_STRING([--disable-cipher],[Disable cipher functions]))
+AC_MSG_CHECKING([whether to support cipher functions])
+if test "$enable_cipher" = "no"; then
+  AC_MSG_RESULT([no])
+else
+  AC_PATH_PROG([CARGO], [cargo], [notfound])
+  AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
+  LIBPEKS=".target_libpeks"
+  LIBS="$LIBS -Lpeks/target/release -lrust_searchable_pke"
+  OPT_FEATURE_FLAGS="$OPT_FEATURE_FLAGS -DSQLITE_ENABLE_CIPHER"
+  AC_MSG_RESULT([yes])
+fi
+AC_SUBST(LIBPEKS)
+
+##########
 # Do we want to support JSON functions
 #
 AC_ARG_ENABLE(json, 
@@ -623,6 +641,7 @@ fi
 # multiple extensions.
 AC_ARG_ENABLE(all, AC_HELP_STRING([--enable-all],
       [Enable FTS4, FTS5, Geopoly, RTree, Sessions]))
+
 
 ##########
 # Do we want to support memsys3 and/or memsys5

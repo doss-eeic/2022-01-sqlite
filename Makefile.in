@@ -314,7 +314,8 @@ SRC = \
   $(TOP)/src/wherecode.c \
   $(TOP)/src/whereexpr.c \
   $(TOP)/src/whereInt.h \
-  $(TOP)/src/window.c
+  $(TOP)/src/window.c \
+  $(PEKSDIR)/rust_apis.h
 
 # Source code for extensions
 #
@@ -651,7 +652,7 @@ sqlite3.pc: $(TOP)/sqlite3.pc.in
 	./config.status
 
 libsqlite3.la:	$(LIBOBJ) $(LIBPEKS)
-	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(TLIBS) \
+	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(LIBPEKS) $(TLIBS) \
 		${ALLOWRELEASE} -rpath "$(libdir)" -version-info "8:6:8"
 
 libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
@@ -662,9 +663,10 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		-avoid-version
 
 $(LIBPEKS):
-	rm -fr peks
-	mkdir peks
-	$(CARGO) build --manifest-path $(PEKSDIR)/Cargo.toml --target-dir peks --release
+	rm -rf peks
+	cp -r $(PEKSDIR) peks
+	cd peks && $(CARGO) build --release
+	touch $(LIBPEKS)
 
 sqlite3$(TEXE):	shell.c sqlite3.c $(LIBPEKS)
 	$(LTLINK) $(READLINE_FLAGS) $(SHELL_OPT) -o $@ \
@@ -1462,7 +1464,6 @@ releasetest:
 lib_install:	libsqlite3.la $(LIBPEKS)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(LTINSTALL) libsqlite3.la $(DESTDIR)$(libdir)
-	$(LTINSTALL) $(LIBPEKS) $(DESTDIR)$(libdir)
 
 install:	sqlite3$(TEXE) lib_install sqlite3.h sqlite3.pc ${HAVE_TCL:1=tcl_install}
 	$(INSTALL) -d $(DESTDIR)$(bindir)

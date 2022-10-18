@@ -162,6 +162,7 @@ foreach hdr {
    vxworks.h
    wal.h
    whereInt.h
+   rust_apis.h
 } {
   set available_hdr($hdr) 1
 }
