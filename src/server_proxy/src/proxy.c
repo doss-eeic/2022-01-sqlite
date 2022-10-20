@@ -10,33 +10,25 @@ int CreateTables(sqlite3 *db)
 
     int n_tables = N_TABLES;
 
-    const char sql[N_TABLES][MAX_SQL_SIZE] = {
+    const char sql[N_TABLES][MAX_SIZE_SQL] = {
         "CREATE TABLE user_table (\
             UserID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
-            DataPublicKey varchar(1024) NOT NULL,\
-            KeywordPublicKey varchar(1024) NOT NULL\
+            DataPublicKey TEXT NOT NULL,\
+            KeywordPublicKey TEXT NOT NULL\
         );",  // (1) create user table
         "CREATE TABLE group_table (\
             GroupID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
-            GroupName varchar(256) NOT NULL,\
+            GroupName TEXT NOT NULL,\
             ParentGroupID INTEGER NULL,\
             CONSTRAINT pgid_is_gid FOREIGN KEY (ParentGroupID) REFERENCES group_table(GroupID)\
         );",  // (2) create group table
         "CREATE TABLE ciphertext_table(\
             DataID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
             GroupID INTEGER NOT NULL,\
-            DataCT varchar(1024) NOT NULL,\
-            KeywordCT varchar(1024) NOT NULL,\
+            DataCT TEXT NOT NULL,\
+            KeywordCT TEXT NOT NULL,\
             CONSTRAINT gid_in_gtable FOREIGN KEY (GroupID) REFERENCES group_table(GroupID)\
-        );",  // (3) create ciphertext table
-        "CREATE TABLE region_table (\
-            RegionID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
-            RegionName varchar(256) NOT NULL,\
-            Type varchar(8) NOT NULL,\
-            Fields varchar(1024) NOT NULL,\
-            StringMaxSize INTEGER NOT NULL,\
-            BitSize INTEGER NOT NULL\
-        );"   // (4) create region table
+        );"   // (3) create ciphertext table
     };
 
     int rc;
@@ -59,7 +51,7 @@ int CreateTables(sqlite3 *db)
 
 UserTableRow *AddUser(sqlite3 *db, char *pkd, char *pkw)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_USER_INSERT_SQL] = "";
     sprintf(sql,
             "INSERT INTO user_table (DataPublicKey, KeywordPublicKey) values "
             "('%s', '%s');",
@@ -89,7 +81,7 @@ UserTableRow *AddUser(sqlite3 *db, char *pkd, char *pkw)
 
 GroupTableRow *AddGroup(sqlite3 *db, char *name, int pid)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_GROUP_INSERT_SQL] = "";
     char pid_s[256] = "NULL";
     if (pid >= 1) {
         sprintf(pid_s, "%d", pid);
@@ -124,7 +116,7 @@ GroupTableRow *AddGroup(sqlite3 *db, char *name, int pid)
 CipherTextTableRow *AddCipherText(sqlite3 *db, int group_id, char *data_ct,
                                   char *keyword_ct)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_CIPHER_TEXT_INSERT_SQL] = "";
     sprintf(sql,
             "INSERT INTO ciphertext_table (GroupID, DataCT, KeywordCT) values "
             "(%d, '%s', '%s');",
@@ -166,7 +158,7 @@ static int callback_get_user(void *row, int argc, char **argv, char **azColName)
 
 UserTableRow *GetUser(sqlite3 *db, int user_id)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_SQL] = "";
     sprintf(sql,
             "SELECT UserID, DataPublicKey, KeywordPublicKey FROM user_table "
             "WHERE UserID=%d;",
@@ -206,7 +198,7 @@ static int callback_get_group(void *row, int argc, char **argv,
 
 GroupTableRow *GetGroup(sqlite3 *db, int group_id)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_SQL] = "";
     sprintf(sql,
             "SELECT GroupID, GroupName, ParentGroupID FROM group_table "
             "WHERE GroupID=%d;",
@@ -230,7 +222,7 @@ GroupTableRow *GetGroup(sqlite3 *db, int group_id)
 
 int SearchChildGroups(sqlite3 *db, int parent_group_id, GroupTableRow *rows)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_SQL] = "";
     sprintf(sql,
             "SELECT GroupID, GroupName, ParentGroupID FROM group_table WHERE "
             "ParentGroupID=%d;",
@@ -295,7 +287,7 @@ static int callback_get_cipher_text(void *row, int argc, char **argv,
 
 CipherTextTableRow *GetCipherText(sqlite3 *db, int ct_id)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_SQL] = "";
     sprintf(sql,
             "SELECT DataID, GroupID, DataCT, KeywordCT FROM ciphertext_table "
             "WHERE DataID=%d;",
@@ -321,10 +313,10 @@ CipherTextTableRow *GetCipherText(sqlite3 *db, int ct_id)
 int SearchCipherTexts(sqlite3 *db, int group_id, char *td,
                       CipherTextTableRow *rows)
 {
-    char sql[MAX_SQL_SIZE] = "";
+    char sql[MAX_SIZE_CIPHER_TEXT_SEARCH_SQL] = "";
     sprintf(sql,
             "SELECT DataID, GroupID, DataCT, KeywordCT FROM ciphertext_table "
-            "WHERE GroupID=%d and test(DataCT, %s)=1;",
+            "WHERE GroupID=%d and test(DataCT, '%s')=1;",
             group_id, td);  // TODO; check SQL execution in SommlierDB
 
     if (DEBUG) {
@@ -374,8 +366,10 @@ int SearchCipherTexts(sqlite3 *db, int group_id, char *td,
 UserTableRow *initializeUserTableRow()
 {
     UserTableRow *row = INITIALIZE(UserTableRow);
-    row->data_public_key = (char *)malloc(sizeof(char) * MAX_KEY_SIZE);
-    row->keyword_public_key = (char *)malloc(sizeof(char) * MAX_KEY_SIZE);
+    row->data_public_key =
+        (char *)malloc(sizeof(char) * MAX_SIZE_DATA_PUBLIC_KEY);
+    row->keyword_public_key =
+        (char *)malloc(sizeof(char) * MAX_SIZE_KEYWORD_PUBLIC_KEY);
 
     return row;
 }
@@ -404,7 +398,7 @@ void setUserTableRow(UserTableRow *row, int id, char *pkd, char *pkw)
 GroupTableRow *initializeGroupTableRow()
 {
     GroupTableRow *row = INITIALIZE(GroupTableRow);
-    row->group_name = (char *)malloc(sizeof(char) * MAX_NAME_SIZE);
+    row->group_name = (char *)malloc(sizeof(char) * MAX_SIZE_NAME);
     return row;
 }
 
@@ -412,7 +406,7 @@ GroupTableRow *initializeGroupTableRows(int n_rows)
 {
     GroupTableRow *rows = INITIALIZE_N(GroupTableRow, n_rows);
     for (int i = 0; i < n_rows; i++) {
-        (&rows[i])->group_name = (char *)malloc(sizeof(char) * MAX_NAME_SIZE);
+        (&rows[i])->group_name = (char *)malloc(sizeof(char) * MAX_SIZE_NAME);
     }
     return rows;
 }
@@ -440,8 +434,9 @@ void setGroupTableRow(GroupTableRow *row, int id, char *name, int pid)
 CipherTextTableRow *initializeCipherTextTableRow()
 {
     CipherTextTableRow *row = INITIALIZE(CipherTextTableRow);
-    row->data_ct = (char *)malloc(sizeof(char) * MAX_CIPHERTEXT_SIZE);
-    row->keyword_ct = (char *)malloc(sizeof(char) * MAX_CIPHERTEXT_SIZE);
+    row->data_ct = (char *)malloc(sizeof(char) * MAX_SIZE_DATA_CIPHER_TEXT);
+    row->keyword_ct =
+        (char *)malloc(sizeof(char) * MAX_SIZE_KEYWORD_CIPHER_TEXT);
     return row;
 }
 

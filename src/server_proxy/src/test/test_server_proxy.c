@@ -1,6 +1,6 @@
 #include "../proxy.h"
 
-#define DBFILE "./sommlier.db"
+#define DBFILE "./sommelier.db"
 
 int test_create_tables(sqlite3 *);
 int test_get_user(sqlite3 *);
@@ -13,19 +13,18 @@ int main(void)
 {
     sqlite3 *db = NULL;
     int err = sqlite3_open(DBFILE, &db);
-    if (err)
-    {
+    if (err) {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
         return (1);
     }
     printf("create db - %s\n", DBFILE);
 
-    // test_create_tables(db);
-    // test_get_user(db);
-    // test_get_group(db);
-    // test_search_child_groups(db);
-    // test_get_cipher_text(db);
+    test_create_tables(db);
+    test_get_user(db);
+    test_get_group(db);
+    test_search_child_groups(db);
+    test_get_cipher_text(db);
 
     sqlite3_close(db);
 
@@ -92,13 +91,12 @@ int test_search_child_groups(sqlite3 *db)
     GroupTableRow *child3 = AddGroup(db, "child3", parent_group->group_id);
     GroupTableRow *child4 = AddGroup(db, "child4", parent_group->group_id);
 
-    GroupTableRow *children = initializeGroupTableRows(MAX_CHILDREN_SIZE);
+    GroupTableRow *children = initializeGroupTableRows(MAX_SIZE_CHILDREN);
     int n_children = SearchChildGroups(db, parent_group->group_id, children);
 
     printf("n_children: %d\n", n_children);
 
-    for (int i = 0; i < n_children; i++)
-    {
+    for (int i = 0; i < n_children; i++) {
         debugGroupTableRow(&children[i]);
     }
 
