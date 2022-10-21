@@ -616,12 +616,15 @@ if test "$enable_cipher" = "no"; then
 else
   AC_PATH_PROG([CARGO], [cargo], [notfound])
   AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
-  LIBPEKS=".target_libpeks"
+  AC_PROG_CXX
+  LIBCIPHER="peks"
+  LIBCRYPTION="libcryption.la"
   LIBS="$LIBS -Lpeks/target/release -lrust_searchable_pke"
   OPT_FEATURE_FLAGS="$OPT_FEATURE_FLAGS -DSQLITE_ENABLE_CIPHER"
   AC_MSG_RESULT([yes])
 fi
-AC_SUBST(LIBPEKS)
+AC_SUBST(LIBCIPHER)
+AC_SUBST(LIBCRYPTION)
 
 ##########
 # Do we want to support JSON functions

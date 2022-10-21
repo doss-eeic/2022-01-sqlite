@@ -9,11 +9,11 @@
 #include <cassert>
 #include <string>
 #include <memory>
-#include "cipher.hpp"
+#include "cryption.hpp"
 
-int hybrid_new_encrypt(FILE *fp_in, FILE *fp_out, EVP_PKEY *pubkey, cipher &slot){
-    unsigned char keybuf[KEYSIZE];
-    unsigned char ivbuf[IVSIZE];
+int hybrid_new_encrypt(FILE *fp_in, FILE *fp_out, cipher &slot, EVP_PKEY *pubkey) noexcept{
+    u_char keybuf[KEYSIZE];
+    u_char ivbuf[IVSIZE];
     RAND_bytes(keybuf, sizeof(keybuf));
     RAND_bytes(ivbuf, sizeof(ivbuf));
     cipher key(keybuf, KEYSIZE);
@@ -30,7 +30,7 @@ int hybrid_new_encrypt(FILE *fp_in, FILE *fp_out, EVP_PKEY *pubkey, cipher &slot
     return outlen;
 }
 
-int hybrid_decrypt(FILE *fp_in, FILE *fp_out, EVP_PKEY *seckey, cipher slot){
+int hybrid_decrypt(FILE *fp_in, FILE *fp_out, const cipher slot, EVP_PKEY *seckey) noexcept{
     cipher key_iv;
     if(rsa_decrypt(key_iv, slot, seckey) != KEYSIZE + IVSIZE){
         return -1;

@@ -30,6 +30,7 @@ BCC = @BUILD_CC@ @BUILD_CFLAGS@
 #
 CARGO = @CARGO@
 CC = @CC@
+CXX = @CXX@
 CFLAGS = @CPPFLAGS@ @CFLAGS@
 TCC = ${CC} ${CFLAGS} -I. -I${TOP}/src -I${TOP}/ext/rtree -I${TOP}/ext/icu
 TCC += -I${TOP}/ext/fts3 -I${TOP}/ext/async -I${TOP}/ext/session
@@ -204,7 +205,8 @@ LIBOBJS1 = sqlite3.lo
 #
 LIBOBJ = $(LIBOBJS$(USE_AMALGAMATION))
 
-LIBPEKS = @LIBPEKS@
+LIBCIPHER = @LIBCIPHER@
+LIBCRYPTION = @LIBCRYPTION@
 
 # All of the source code files.
 #
@@ -643,7 +645,7 @@ DBFUZZ_OPT =
 # This is the default Makefile target.  The objects listed here
 # are what get build when you type just "make" with no arguments.
 #
-all:	sqlite3.h libsqlite3.la sqlite3$(TEXE) $(HAVE_TCL:1=libtclsqlite3.la)
+all:	sqlite3.h libsqlite3.la sqlite3$(TEXE) $(HAVE_TCL:1=libtclsqlite3.la) $(LIBCRYPTION)
 
 Makefile: $(TOP)/Makefile.in
 	./config.status
@@ -651,8 +653,8 @@ Makefile: $(TOP)/Makefile.in
 sqlite3.pc: $(TOP)/sqlite3.pc.in
 	./config.status
 
-libsqlite3.la:	$(LIBOBJ) $(LIBPEKS)
-	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(LIBPEKS) $(TLIBS) \
+libsqlite3.la:	$(LIBOBJ) $(LIBCIPHER)
+	$(LTLINK) -no-undefined -o $@ $(LIBOBJ) $(TLIBS) \
 		${ALLOWRELEASE} -rpath "$(libdir)" -version-info "8:6:8"
 
 libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
@@ -662,13 +664,16 @@ libtclsqlite3.la:	tclsqlite.lo libsqlite3.la
 		-version-info "8:6:8" \
 		-avoid-version
 
-$(LIBPEKS):
+$(LIBCIPHER):
 	rm -rf peks
 	cp -r $(PEKSDIR) peks
 	cd peks && $(CARGO) build --release
-	touch $(LIBPEKS)
 
-sqlite3$(TEXE):	shell.c sqlite3.c $(LIBPEKS)
+libcryption.la:
+	make -C $(TOP)/src/cryption builddir=`pwd` CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
+		libtool="`pwd`/$(LIBTOOL)" libdir=$(libdir)
+
+sqlite3$(TEXE):	shell.c sqlite3.c $(LIBCIPHER)
 	$(LTLINK) $(READLINE_FLAGS) $(SHELL_OPT) -o $@ \
 		shell.c sqlite3.c \
 		$(LIBREADLINE) $(TLIBS) -rpath "$(libdir)"
@@ -1119,9 +1124,6 @@ SHELL_SRC = \
 shell.c:	$(SHELL_SRC) $(TOP)/tool/mkshellc.tcl
 	$(TCLSH_CMD) $(TOP)/tool/mkshellc.tcl >shell.c
 
-
-
-
 # Rules to build the extension objects.
 #
 icu.lo:	$(TOP)/ext/icu/icu.c $(HDR) $(EXTHDR)
@@ -1461,9 +1463,10 @@ releasetest:
 
 # Standard install and cleanup targets
 #
-lib_install:	libsqlite3.la $(LIBPEKS)
+lib_install:	libsqlite3.la $(LIBPEKS) $(LIBCRYPTION)
 	$(INSTALL) -d $(DESTDIR)$(libdir)
 	$(LTINSTALL) libsqlite3.la $(DESTDIR)$(libdir)
+	$(LTINSTALL) $(LIBCRYPTION) $(wildcard peks/target/release/librust_searchable_pke.*) $(DESTDIR)$(libdir)
 
 install:	sqlite3$(TEXE) lib_install sqlite3.h sqlite3.pc ${HAVE_TCL:1=tcl_install}
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -1511,7 +1514,7 @@ clean:
 	rm -f dbhash dbhash.exe
 	rm -f fts5.* fts5parse.*
 	rm -f threadtest5
-	rm -rf peks
+	rm -rf peks $(LIBCIPHER)
 
 distclean:	clean
 	rm -f sqlite_cfg.h config.log config.status libtool Makefile sqlite3.pc \

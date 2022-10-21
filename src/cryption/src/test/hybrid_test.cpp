@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <string>
 #include <memory>
-#include "cipher.hpp"
+#include "cryption.hpp"
 
 
 int main(int argc, char **argv){
@@ -20,7 +20,7 @@ int main(int argc, char **argv){
         return 1;
     }
     EVP_PKEY_ptr pubkey(_pubkey, EVP_PKEY_free);
-    if((outlen = hybrid_new_encrypt(fp_in, fp_out, pubkey.get(), slot)) >= 0){
+    if((outlen = hybrid_new_encrypt(fp_in, fp_out, slot, pubkey.get())) >= 0){
         std::cout << "encrypted size: " << outlen << std::endl;
         std::cout << "slot size: " << slot.size() << std::endl;
     }else{
@@ -41,7 +41,7 @@ int main(int argc, char **argv){
             return 1;
         }
         EVP_PKEY_ptr seckey(_seckey, EVP_PKEY_free);
-        if((outlen = hybrid_decrypt(fp_in, fp_out, seckey.get(), slot)) >= 0){
+        if((outlen = hybrid_decrypt(fp_in, fp_out, slot, seckey.get())) >= 0){
             std::cout << "decrypted size: " << outlen << std::endl;
         }
         else{

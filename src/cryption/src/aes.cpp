@@ -7,25 +7,22 @@
 #include <cstdio>
 #include <string>
 #include <memory>
-#include "cipher.hpp"
+#include "cryption.hpp"
 
 #define DEBUG 0
 
-int aes_encrypt(FILE *fp_in, FILE *fp_out, cipher key, cipher iv){
+int aes_encrypt(FILE *fp_in, FILE *fp_out, const cipher key, const cipher iv) noexcept{
     EVP_CIPHER_CTX *_ctx;
     if((_ctx = EVP_CIPHER_CTX_new()) == NULL){
         return -1;
     }
     EVP_CIPHER_CTX_ptr ctx(_ctx, EVP_CIPHER_CTX_free);
-    if(key.size() < 32 || iv.size() < 16){
-        return -1;
-    }
     if(EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_cbc(), NULL, key.data(), iv.data()) != 1){
         return -1;
     }
 
-    unsigned char *indata = new unsigned char[1024];
-    unsigned char *outdata = new unsigned char[1056];
+    u_char *indata = new u_char[1024];
+    u_char *outdata = new u_char[1056];
 
     int inlen, outlen, totallen = 0, tmplen;
     while((inlen = fread(indata, 1, 1024, fp_in)) != 0){
@@ -47,7 +44,7 @@ int aes_encrypt(FILE *fp_in, FILE *fp_out, cipher key, cipher iv){
     return totallen;
 }
 
-int aes_decrypt(FILE *fp_in, FILE *fp_out, cipher key, cipher iv){
+int aes_decrypt(FILE *fp_in, FILE *fp_out, const cipher key, const cipher iv) noexcept{
     EVP_CIPHER_CTX *_ctx;
     if((_ctx = EVP_CIPHER_CTX_new()) == NULL){
         return -1;
@@ -57,8 +54,8 @@ int aes_decrypt(FILE *fp_in, FILE *fp_out, cipher key, cipher iv){
         return -1;
     }
 
-    unsigned char *indata = new unsigned char[1024];
-    unsigned char *outdata = new unsigned char[1056];
+    u_char *indata = new u_char[1024];
+    u_char *outdata = new u_char[1056];
 
     int inlen, outlen, totallen = 0, tmplen;
     while((inlen = fread(indata, 1, 1024, fp_in)) != 0){

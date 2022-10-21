@@ -7,9 +7,9 @@
 #include <cstdio>
 #include <string>
 #include <memory>
-#include "cipher.hpp"
+#include "cryption.hpp"
 
-int rsa_encrypt(cipher &out, cipher in, EVP_PKEY *pubkey){
+int rsa_encrypt(cipher &out, const cipher in, EVP_PKEY *pubkey) noexcept{
     EVP_PKEY_CTX *_ctx;
 
     if((_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pubkey, NULL)) == NULL){
@@ -39,7 +39,7 @@ int rsa_encrypt(cipher &out, cipher in, EVP_PKEY *pubkey){
 }
 
 
-int rsa_decrypt(cipher &out, cipher in, EVP_PKEY *seckey){
+int rsa_decrypt(cipher &out, const cipher in, EVP_PKEY *seckey) noexcept{
     EVP_PKEY_CTX *_ctx;
 
     if((_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, seckey, NULL)) == NULL){
