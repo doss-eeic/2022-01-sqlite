@@ -248,7 +248,7 @@ AC_ARG_ENABLE(static-shell, [AS_HELP_STRING(
 if test x"$enable_static_shell" = "xyes"; then
   EXTRA_SHELL_OBJ=sqlite3-sqlite3.$OBJEXT
 else
-  EXTRA_SHELL_OBJ=libsqlite3.la
+  EXTRA_SHELL_OBJ=libsommelier-db.la
 fi
 AC_SUBST(EXTRA_SHELL_OBJ)
 #-----------------------------------------------------------------------

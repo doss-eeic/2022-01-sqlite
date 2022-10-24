@@ -617,14 +617,12 @@ else
   AC_PATH_PROG([CARGO], [cargo], [notfound])
   AS_IF([test "$CARGO" = "notfound"], [AC_MSG_ERROR([cargo is required])])
   AC_PROG_CXX
-  LIBCIPHER="peks"
-  LIBCRYPTION="libcryption.la"
-  LIBS="$LIBS -Lpeks/target/release -lrust_searchable_pke"
+  LIBPKE="pke/target/release/librust_searchable_pke.la"
+  # LIBS="$LIBS -Lpeks/target/release -lrust_searchable_pke"
   OPT_FEATURE_FLAGS="$OPT_FEATURE_FLAGS -DSQLITE_ENABLE_CIPHER"
   AC_MSG_RESULT([yes])
 fi
-AC_SUBST(LIBCIPHER)
-AC_SUBST(LIBCRYPTION)
+AC_SUBST(LIBPKE)
 
 ##########
 # Do we want to support JSON functions
