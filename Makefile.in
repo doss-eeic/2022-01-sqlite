@@ -317,7 +317,7 @@ SRC = \
   $(TOP)/src/whereexpr.c \
   $(TOP)/src/whereInt.h \
   $(TOP)/src/window.c \
-  $(PEKSDIR)/rust_apis.h
+  $(PEKSDIR)/rust_searchable_pke.h
 
 # Source code for extensions
 #
@@ -563,7 +563,7 @@ HDR = \
    $(TOP)/src/vxworks.h \
    $(TOP)/src/whereInt.h \
    sqlite_cfg.h \
-   $(PEKSDIR)/rust_apis.h
+   $(PEKSDIR)/rust_searchable_pke.h
 
 # Header files used by extensions
 #

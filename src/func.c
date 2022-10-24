@@ -21,7 +21,7 @@
 #endif
 #include "vdbeInt.h"
 #ifdef SQLITE_ENABLE_CIPHER
-#include "rust_apis.h"
+#include "rust_searchable_pke.h"
 #endif
 
 /*
@@ -2222,7 +2222,7 @@ static void test_cipherFunc(
   if( len == 0 || len2 == 0) return;
   cipher.ptr = (char*)sqlite3_value_text(argv[0]);
   trapdoor.ptr = (char*)sqlite3_value_text(argv[1]);
-  result = pecdk_test(cipher, trapdoor);
+  result = pecdkTest(cipher, trapdoor);
   if(result == 1){
     sqlite3_result_int(context, 1);
   }else{
