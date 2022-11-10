@@ -1,5 +1,22 @@
-<h1 align="center">SQLite Source Repository</h1>
+<h1 align="center">Sommelier DB</h1>
+<!-- <h1 align="center">SQLite Source Repository</h1> -->
 
+## how to build
+
+Execute following commands, you can install `Sommelier DB` command & C API.
+
+```sh
+# in this repository
+$ git submodule update --init --recursive
+$ configure --prefix=/path/to/install
+$ make
+```
+
+## C API example.
+
+<!-- TODO: code example -->
+
+<!--
 This repository contains the complete source code for the
 [SQLite database engine](https://sqlite.org/).  Some test scripts
 are also included.  However, many other test scripts
@@ -327,3 +344,4 @@ The main SQLite website is [http://www.sqlite.org/](http://www.sqlite.org/)
 with geographically distributed backups at
 [http://www2.sqlite.org/](http://www2.sqlite.org) and
 [http://www3.sqlite.org/](http://www3.sqlite.org).
+-->
