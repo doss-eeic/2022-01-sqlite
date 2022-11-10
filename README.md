@@ -14,6 +14,171 @@ $ make
 ```
 
 ## C API example.
+```
+#include <stdio.h>
+#include "sommelier-db.h"
+#include "rust_searchable_pke.h"
+
+#define DBFILE "./sommelier_test.db"
+#define MAX_SIZE_SQL 512
+#define NUM_KEYWORDS 14
+#define MAX_SIZE_KEYWORD_CIPHER_TEXT 2900000
+#define MAX_SIZE_TRAPDOOR 22800
+#define MAX_INT_SIZE 64
+#define MAX_SIZE_CIPHER_TEXT_INSERT_SQL \
+    MAX_SIZE_SQL + MAX_INT_SIZE + 2 * MAX_SIZE_KEYWORD_CIPHER_TEXT
+#define MAX_SIZE_CIPHER_TEXT_SEARCH_SQL MAX_SIZE_SQL + MAX_SIZE_TRAPDOOR
+
+int main(void)
+{
+    // Open a new database.
+    sqlite3 *db = NULL;
+    int err = sqlite3_open(DBFILE, &db);
+    if (err)
+    {
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return (1);
+    }
+    printf("create db - %s\n", DBFILE);
+
+    // Create a user_table.
+    const char create_sql[MAX_SIZE_SQL] = {
+        "CREATE TABLE user_table (\
+            UserID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
+            NameCT TEXT NOT NULL,\
+            AgeCT TEXT NOT NULL\
+        );",
+    };
+    int rc;
+    char *zErrMsg = 0;
+    rc = sqlite3_exec(db, create_sql, 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    char *region_name = "test_cipher";
+
+    // Generate new keys.
+    CPecdkSecretKey sk = pecdkGenSecretKey(NUM_KEYWORDS);
+    CPecdkPublicKey pk = pecdkGenPublicKey(sk);
+
+    // Here, name and age encryptions are generated for two users.
+    char *name1 = "Tanaka Taro";
+    unsigned int age1 = 21;
+    CPecdkCiphertext ct_name1 = genCiphertextForPrefixSearch(pk, region_name, name1);
+    CPecdkCiphertext ct_age1 = genCiphertextForRangeSearch(pk, region_name, 7, age1);
+    char *name2 = "Tanaka Hanako";
+    unsigned int age2 = 18;
+    CPecdkCiphertext ct_name2 = genCiphertextForPrefixSearch(pk, region_name, name2);
+    CPecdkCiphertext ct_age2 = genCiphertextForRangeSearch(pk, region_name, 7, age2);
+
+    // Insert ciphertexts into the user_table.
+    char insert_sql[MAX_SIZE_CIPHER_TEXT_INSERT_SQL] = "";
+    sprintf(insert_sql,
+            "INSERT INTO user_table (NameCT, AgeCT) values "
+            "('%s', '%s');",
+            ct_name1.ptr, ct_age1.ptr);
+    rc = sqlite3_exec(db, insert_sql, 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+    sprintf(insert_sql,
+            "INSERT INTO user_table (NameCT, AgeCT) values "
+            "('%s', '%s');",
+            ct_name2.ptr, ct_age2.ptr);
+    rc = sqlite3_exec(db, insert_sql, 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+
+    // Generate a trapdoor to search for the user whose name has a prefix "Tanaka ".
+    CPecdkTrapdoor td_name = genTrapdoorForPrefixSearch(sk, region_name, "Tanaka ");
+    char select_sql[MAX_SIZE_CIPHER_TEXT_SEARCH_SQL] = "";
+    sprintf(select_sql,
+            "SELECT UserID FROM user_table "
+            "WHERE test_cipher(NameCT, '%s')=1;",
+            td_name.ptr);
+
+    sqlite3_stmt *stmt1 = NULL;
+    int return_value = sqlite3_prepare_v2(db, select_sql, -1, &stmt1, 0);
+
+    if (return_value)
+    {
+        printf("Selecting data from DB Failed (err_code=%d)\n", return_value);
+        return -1;
+    }
+
+    int i = 0;
+    while (1)
+    {
+        return_value = sqlite3_step(stmt1);
+
+        if (return_value == SQLITE_ROW)
+        {
+            int id = (int)sqlite3_column_int(stmt1, 0);
+            printf("%d-th user id for name search: %d\n", i, id);
+        }
+        else if (return_value == SQLITE_DONE)
+        {
+            break;
+        }
+        else
+        {
+            sqlite3_finalize(stmt1);
+            printf("Some error encountered\n");
+            return -1;
+        }
+        i++;
+    }
+    sqlite3_finalize(stmt1);
+
+    // Generate a trapdoor to search for the user whose age is from 20 to 25.
+    CPecdkTrapdoor td_age = genTrapdoorForRangeSearch(sk, region_name, 20, 25, 7);
+    sprintf(select_sql,
+            "SELECT UserID FROM user_table "
+            "WHERE test_cipher(AgeCT, '%s')=1;",
+            td_age.ptr);
+    sqlite3_stmt *stmt2 = NULL;
+    return_value = sqlite3_prepare_v2(db, select_sql, -1, &stmt2, 0);
+
+    if (return_value)
+    {
+        printf("Selecting data from DB Failed (err_code=%d)\n", return_value);
+        return -1;
+    }
+
+    i = 0;
+    while (1)
+    {
+        return_value = sqlite3_step(stmt2);
+
+        if (return_value == SQLITE_ROW)
+        {
+            int id = (int)sqlite3_column_int(stmt2, 0);
+            printf("%d-th user id for age search: %d\n", i, id);
+        }
+        else if (return_value == SQLITE_DONE)
+        {
+            break;
+        }
+        else
+        {
+            sqlite3_finalize(stmt2);
+            printf("Some error encountered\n");
+            return -1;
+        }
+        i++;
+    }
+    sqlite3_finalize(stmt2);
+}
+```
 
 <!-- TODO: code example -->
 
