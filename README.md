@@ -9,6 +9,7 @@ Execute following commands, you can install `Sommelier DB` command & C API.
 # in this repository
 $ git submodule update --init --recursive
 $ configure --prefix=/path/to/install
+$ make install
 $ make
 ```
 
